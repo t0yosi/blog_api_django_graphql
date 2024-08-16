@@ -11,6 +11,10 @@ from .models import Author, Post, Comment
 # Import filter classes
 from .filters import AuthorFilter, PostFilter, CommentFilter
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # Define GraphQL type for Author model
 class AuthorType(DjangoObjectType):
@@ -18,6 +22,7 @@ class AuthorType(DjangoObjectType):
         model = Author
         interfaces = (relay.Node,)
         filterset_class = AuthorFilter
+        fields = '__all__' 
 
 
 # Define GraphQL type for Post model
@@ -26,6 +31,7 @@ class PostType(DjangoObjectType):
         model = Post
         interfaces = (relay.Node,)
         filterset_class = PostFilter
+        fields = '__all__' 
 
 
 # Define GraphQL type for Comment model
@@ -34,6 +40,7 @@ class CommentType(DjangoObjectType):
         model = Comment
         interfaces = (relay.Node,)
         filterset_class = CommentFilter
+        fields = '__all__' 
 
 
 #######################     FETCH DATA      ################################
@@ -93,8 +100,10 @@ class CreateAuthor(graphene.Mutation):
 
     # Mutation method to create a new author instance
     def mutate(self, info, name, email, bio=None):
+        logger.debug(f"Creating author with ID: {id}")
         author = Author(name=name, email=email, bio=bio)
         author.save()  # Save the author instance to the database
+        logger.debug(f"Created author with ID: {author.id}")
         return CreateAuthor(author=author)
 
 
@@ -110,6 +119,7 @@ class UpdateAuthor(graphene.Mutation):
 
     # Mutation method to update an existing author instance
     def mutate(self, info, id, name=None, email=None, bio=None):
+        logger.debug(f"Updating author with ID: {id}")
         author = Author.objects.get(pk=id)  # Fetch the author by ID
         if name:
             author.name = name
@@ -118,6 +128,7 @@ class UpdateAuthor(graphene.Mutation):
         if bio:
             author.bio = bio
         author.save()  # Save the updated author instance
+        logger.debug(f"Updated author with ID: {author.id}")
         return UpdateAuthor(author=author)
 
 
@@ -130,8 +141,10 @@ class DeleteAuthor(graphene.Mutation):
 
     # Mutation method to delete an author instance
     def mutate(self, info, id):
+        logger.debug(f"Deleting author with ID: {id}")
         author = Author.objects.get(pk=id)  # Fetch the author by ID
         author.delete()  # Delete the author instance
+        logger.debug(f"Deleted author with ID: {author.id}")
         return DeleteAuthor(ok=True)
 
 
@@ -146,9 +159,11 @@ class CreatePost(graphene.Mutation):
 
     # Mutation method to create a new post instance
     def mutate(self, info, title, content, author_id):
+        logger.debug(f"Creating post with title: {title} and author_id: {author_id}")
         author = Author.objects.get(pk=author_id)  # Fetch the author by ID
         post = Post(title=title, content=content, author=author)
         post.save()  # Save the post instance to the database
+        logger.debug(f"Created post with ID: {post.id}")
         return CreatePost(post=post)
 
 
@@ -163,12 +178,14 @@ class UpdatePost(graphene.Mutation):
 
     # Mutation method to update an existing post instance
     def mutate(self, info, id, title=None, content=None):
+        logger.debug(f"Updating post with ID: {id}")
         post = Post.objects.get(pk=id)  # Fetch the post by ID
         if title:
             post.title = title
         if content:
             post.content = content
         post.save()  # Save the updated post instance
+        logger.debug(f"Updated post with ID: {post.id}")
         return UpdatePost(post=post)
 
 
@@ -181,8 +198,10 @@ class DeletePost(graphene.Mutation):
 
     # Mutation method to delete a post instance
     def mutate(self, info, id):
+        logger.debug(f"Deleting post with ID: {id}")
         post = Post.objects.get(pk=id)  # Fetch the post by ID
         post.delete()  # Delete the post instance
+        logger.debug(f"CDeleted post with ID: {post.id}")
         return DeletePost(ok=True)
 
 
@@ -196,9 +215,11 @@ class CreateComment(graphene.Mutation):
 
     # Mutation method to create a new comment instance
     def mutate(self, info, content, post_id):
+        logger.debug(f'Creating comment with content: {content} and post_id: {post_id}')
         post = Post.objects.get(pk=post_id)  # Fetch the post by ID
         comment = Comment(content=content, post=post)
         comment.save()  # Save the comment instance to the database
+        logger.debug(f'Created comment with ID: {comment.id}')
         return CreateComment(comment=comment)
 
 
@@ -212,10 +233,12 @@ class UpdateComment(graphene.Mutation):
 
     # Mutation method to update an existing comment instance
     def mutate(self, info, id, content=None):
+        logger.debug(f'Updating comment with ID: {id}')
         comment = Comment.objects.get(pk=id)  # Fetch the comment by ID
         if content:
             comment.content = content
         comment.save()  # Save the updated comment instance
+        logger.debug(f'Updated comment with ID: {comment.id}')
         return UpdateComment(comment=comment)
 
 
@@ -228,8 +251,10 @@ class DeleteComment(graphene.Mutation):
 
     # Mutation method to delete a comment instance
     def mutate(self, info, id):
+        logger.debug(f'Deleting comment with ID: {id}')
         comment = Comment.objects.get(pk=id)  # Fetch the comment by ID
         comment.delete()  # Delete the comment instance
+        logger.debug(f'Deleted comment with ID: {comment.id}')
         return DeleteComment(ok=True)
 
 
