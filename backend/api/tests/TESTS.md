@@ -23,3 +23,9 @@ Django Model Tests
     test_author_creation: Tests the creation of an author in the Django model.
     test_post_creation: Tests the creation of a post in the Django model.
     test_comment_creation: Tests the creation of a comment in the Django model.
+
+
+TO RUN TESTS:
+    Setup project as instructed in root directory README file
+    run "pytest" in terminal
+    Wait for results
