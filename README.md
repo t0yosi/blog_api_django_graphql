@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Project Name** is a web application built using Django and GraphQL, designed for [brief description of the project purpose]. This README provides instructions for setting up the project, an overview of its architecture, and details on the assumptions and decisions made during development.
+    ####dqlBlog is a web application built using Django and GraphQL, designed for [brief description of the project purpose]. This README provides instructions for setting up the project, an overview of its architecture, and details on the assumptions and decisions made during development.
 
 ## Setup Instructions
 
@@ -20,7 +20,9 @@
 1. **Clone the Repository**
 
    ```sh```
+
         git clone https://github.com/t0yosi/blog_api_django_graphql.git
+        
         cd backend
 
 2.  **Create a Virtual Environment**
@@ -60,21 +62,23 @@
 
         python manage.py migrate
 
-        Create a Superuser (optional)
+    Create a Superuser (optional)
 
     ```sh```
 
         python manage.py createsuperuser
 
-        Run the Development Server
+    Run the Development Server
 
     ```sh```
 
         python manage.py runserver
 
-        Access the Application
+    Access the Application
 
         Open your browser and navigate to http://127.0.0.1:8000/ to see the application in action.
+
+        Open your browser and navigate to http://127.0.0.1:8000/graphql/ to use the graphql playground.
 
 7. ***Running Tests***
 
