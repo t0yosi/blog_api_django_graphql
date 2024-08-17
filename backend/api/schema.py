@@ -1,6 +1,10 @@
 import graphene
+import graphql_jwt
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+
+# Import JWT Decorators
+from graphql_jwt.decorators import login_required
 
 # Import relay for the Node interface
 from graphene import relay
@@ -22,7 +26,7 @@ class AuthorType(DjangoObjectType):
         model = Author
         interfaces = (relay.Node,)
         filterset_class = AuthorFilter
-        fields = '__all__' 
+        fields = "__all__"
 
 
 # Define GraphQL type for Post model
@@ -31,7 +35,7 @@ class PostType(DjangoObjectType):
         model = Post
         interfaces = (relay.Node,)
         filterset_class = PostFilter
-        fields = '__all__' 
+        fields = "__all__"
 
 
 # Define GraphQL type for Comment model
@@ -40,7 +44,7 @@ class CommentType(DjangoObjectType):
         model = Comment
         interfaces = (relay.Node,)
         filterset_class = CommentFilter
-        fields = '__all__' 
+        fields = "__all__"
 
 
 #######################     FETCH DATA      ################################
@@ -153,14 +157,27 @@ class CreatePost(graphene.Mutation):
     class Arguments:
         title = graphene.String(required=True)
         content = graphene.String(required=True)
-        author_id = graphene.Int(required=True)
+        author_id = graphene.String(required=True)
 
     post = graphene.Field(PostType)
 
     # Mutation method to create a new post instance
+    @login_required
     def mutate(self, info, title, content, author_id):
-        logger.debug(f"Creating post with title: {title} and author_id: {author_id}")
-        author = Author.objects.get(pk=author_id)  # Fetch the author by ID
+        user = info.context.user
+        if not user.is_authenticated:
+            logger.debug(f"403- Not Authenticated to create posts")
+            raise Exception("Authentication credentials were not provided")
+
+        # Ensure `author` is valid
+        try:
+            author = user.author_profile
+        except Author.DoesNotExist:
+            logger.debug(f"404- Author with ID {user.username} does not exist")
+            raise Exception("Author does not exist")
+
+        logger.debug(f"Creating post with title: {title} for author_id: {author.name}")
+        # author = Author.objects.get(user=user)
         post = Post(title=title, content=content, author=author)
         post.save()  # Save the post instance to the database
         logger.debug(f"Created post with ID: {post.id}")
@@ -177,9 +194,22 @@ class UpdatePost(graphene.Mutation):
     post = graphene.Field(PostType)
 
     # Mutation method to update an existing post instance
+    @login_required
     def mutate(self, info, id, title=None, content=None):
+        user = info.context.user
         logger.debug(f"Updating post with ID: {id}")
-        post = Post.objects.get(pk=id)  # Fetch the post by ID
+        if not user.is_authenticated:
+            logger.debug(f"403- Not Authenticated to update posts")
+            raise Exception("Authentication credentials were not provided")
+        logger.debug(f"Updating post with ID: {id}")
+        try:
+            post = Post.objects.get(pk=id)
+        except Post.DoesNotExist:
+            logger.debug(f"404- Post with ID {id} does not exist")
+            raise Exception("Post does not exist")
+        if post.author.user != user:
+            logger.debug(f"403- Not permitted to update this post")
+            raise Exception("You do not have permission to edit this post")
         if title:
             post.title = title
         if content:
@@ -197,9 +227,22 @@ class DeletePost(graphene.Mutation):
     ok = graphene.Boolean()
 
     # Mutation method to delete a post instance
+    @login_required
     def mutate(self, info, id):
+        user = info.context.user
         logger.debug(f"Deleting post with ID: {id}")
-        post = Post.objects.get(pk=id)  # Fetch the post by ID
+
+         # Fetch the post by ID
+        try:
+            post = Post.objects.get(pk=id)
+        except Post.DoesNotExist:
+            logger.debug(f"404- Post with ID {id} does not exist")
+            raise Exception("Post does not exist")
+
+        if post.author.user != user:
+            logger.debug(f"403- User {user.username} does not have permission to delete this post")
+            raise Exception("You do not have permission to delete this post")
+            
         post.delete()  # Delete the post instance
         logger.debug(f"CDeleted post with ID: {post.id}")
         return DeletePost(ok=True)
@@ -215,11 +258,11 @@ class CreateComment(graphene.Mutation):
 
     # Mutation method to create a new comment instance
     def mutate(self, info, content, post_id):
-        logger.debug(f'Creating comment with content: {content} and post_id: {post_id}')
+        logger.debug(f"Creating comment with content: {content} and post_id: {post_id}")
         post = Post.objects.get(pk=post_id)  # Fetch the post by ID
         comment = Comment(content=content, post=post)
         comment.save()  # Save the comment instance to the database
-        logger.debug(f'Created comment with ID: {comment.id}')
+        logger.debug(f"Created comment with ID: {comment.id}")
         return CreateComment(comment=comment)
 
 
@@ -233,12 +276,12 @@ class UpdateComment(graphene.Mutation):
 
     # Mutation method to update an existing comment instance
     def mutate(self, info, id, content=None):
-        logger.debug(f'Updating comment with ID: {id}')
+        logger.debug(f"Updating comment with ID: {id}")
         comment = Comment.objects.get(pk=id)  # Fetch the comment by ID
         if content:
             comment.content = content
         comment.save()  # Save the updated comment instance
-        logger.debug(f'Updated comment with ID: {comment.id}')
+        logger.debug(f"Updated comment with ID: {comment.id}")
         return UpdateComment(comment=comment)
 
 
@@ -251,10 +294,10 @@ class DeleteComment(graphene.Mutation):
 
     # Mutation method to delete a comment instance
     def mutate(self, info, id):
-        logger.debug(f'Deleting comment with ID: {id}')
+        logger.debug(f"Deleting comment with ID: {id}")
         comment = Comment.objects.get(pk=id)  # Fetch the comment by ID
         comment.delete()  # Delete the comment instance
-        logger.debug(f'Deleted comment with ID: {comment.id}')
+        logger.debug(f"Deleted comment with ID: {comment.id}")
         return DeleteComment(ok=True)
 
 
@@ -272,6 +315,10 @@ class Mutation(graphene.ObjectType):
     create_comment = CreateComment.Field()
     update_comment = UpdateComment.Field()
     delete_comment = DeleteComment.Field()
+
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
+    refresh_token = graphql_jwt.Refresh.Field()
 
 
 # Combine all queries and mutations into a single schema

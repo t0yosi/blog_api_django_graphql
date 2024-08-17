@@ -1,1 +1,15 @@
+# venv
 dQl
+
+
+# environment variables
+backend/.env
+
+
+# logs
+backend/logs
+
+
+
+# staticfiles
+backend/staticfiles

@@ -2,36 +2,45 @@ from django.test import TestCase
 from graphene_django.utils import GraphQLTestCase
 from ..models import Author, Post, Comment
 from ..schema import schema
+from django.contrib.auth.models import User
+from graphql_jwt.shortcuts import get_token
 
 
 class PostMutationTest(GraphQLTestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="testpass")
+        self.token = get_token(self.user)
         self.author = Author.objects.create(
-            name="John Doe", email="john.doe@example.com"
+            name="John Doe",
+            email="john.doe@example.com",
         )
         self.post = Post.objects.create(
             title="Post Title", content="Post content", author=self.author
         )
         self.comment = Comment.objects.create(content="Comment content", post=self.post)
 
-    # Test for creating a post
+    # Example test method with authentication
     def test_create_post(self):
-        query = (
-            """
-            mutation {
-              createPost(title: "New Post", content: "New content", authorId: %s) {
+        query = """
+            mutation CreatePost($title: String!, $content: String!, $authorId: String!) {
+              createPost(title: $title, content: $content, authorId: $authorId) {
                 post {
                   title
                   content
                 }
               }
             }
-            """
-            % self.author.id
-        )
-
+        """
+        variables = {
+            "title": "New Post",
+            "content": "New content",
+            "authorId": str(self.author.id),
+        }
         response = self.client.post(
-            "/graphql/", {"query": query}, content_type="application/json"
+            "/graphql/",
+            {"query": query, "variables": variables},
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",  # Pass the JWT token
+            content_type="application/json",
         )
 
         self.assertResponseNoErrors(response)
@@ -44,22 +53,27 @@ class PostMutationTest(GraphQLTestCase):
 
     # Test for updating a post
     def test_update_post(self):
-        query = (
-            """
-            mutation {
-              updatePost(id: %s, title: "Updated Title", content: "Updated content") {
+        query = """
+            mutation UpdatePost($id: Int!, $title: String!, $content: String!) {
+              updatePost(id: $id, title: $title, content: $content) {
                 post {
                   title
                   content
                 }
               }
             }
-            """
-            % self.post.id
-        )
+        """
+        variables = {
+            "id": self.post.id,
+            "title": "Updated Title",
+            "content": "Updated content",
+        }
 
         response = self.client.post(
-            "/graphql/", {"query": query}, content_type="application/json"
+            "/graphql/",
+            {"query": query, "variables": variables},
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+            content_type="application/json",
         )
 
         self.assertResponseNoErrors(response)
@@ -72,19 +86,20 @@ class PostMutationTest(GraphQLTestCase):
 
     # Test for deleting a post
     def test_delete_post(self):
-        query = (
-            """
-            mutation {
-              deletePost(id: %s) {
+        query = """
+            mutation DeletePost($id: Int!) {
+              deletePost(id: $id) {
                 ok
               }
             }
-            """
-            % self.post.id
-        )
+        """
+        variables = {"id": self.post.id}
 
         response = self.client.post(
-            "/graphql/", {"query": query}, content_type="application/json"
+            "/graphql/",
+            {"query": query, "variables": variables},
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",  # Include the JWT token
+            content_type="application/json",
         )
 
         self.assertResponseNoErrors(response)

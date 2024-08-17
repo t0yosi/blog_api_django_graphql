@@ -54,5 +54,7 @@ class CommentModelTest(TestCase):
         self.assertEqual(self.comment.post, self.post)
 
     def test_comment_str_method(self):
-        # Optional: Check the string representation of the Comment model (if applicable)
-        self.assertEqual(str(self.comment), "Sample comment")
+        # Check the string representation of the Comment model
+        self.assertEqual(
+            str(self.comment), f"Comment on {self.post.title} by {self.comment.id}"
+        )

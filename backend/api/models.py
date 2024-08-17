@@ -1,9 +1,11 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 from django.db import models
 
 class Author(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author_profile', null=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     bio = models.TextField(blank=True, null=True)
