@@ -31,20 +31,20 @@ python manage.py collectstatic --noinput
 
 # Step 7: Start the Django development server (for testing purposes)
 echo "Starting the Django development server..."
-python manage.py runserver 
+python manage.py runserver 0.0.0.0:8000
 
 # Uncomment the lines below if deploying to production with Gunicorn and Nginx
 
 # Step 8: Install and configure Gunicorn
-# echo "Installing and configuring Gunicorn..."
-# pip install gunicorn
-# gunicorn --bind 0.0.0.0:8000 backend.wsgi:application
+echo "Installing and configuring Gunicorn..."
+pip install gunicorn
+gunicorn --bind 0.0.0.0:8000 backend.wsgi:application
 
-# # Step 9: Set up Nginx to proxy pass to Gunicorn
-# # echo "Configuring Nginx..."
-# # sudo cp /path/to/your/project/nginx_config /etc/nginx/sites-available/your_project_name
-# # sudo ln -s /etc/nginx/sites-available/your_project_name /etc/nginx/sites-enabled
-# # sudo nginx -t
-# # sudo systemctl restart nginx
+# Step 9: Set up Nginx to proxy pass to Gunicorn
+# echo "Configuring Nginx..."
+# sudo cp /path/to/your/project/nginx_config /etc/nginx/sites-available/your_project_name
+# sudo ln -s /etc/nginx/sites-available/your_project_name /etc/nginx/sites-enabled
+# sudo nginx -t
+# sudo systemctl restart nginx
 
 echo "Deployment complete! Your app is running at http://your-server-ip:8000"
