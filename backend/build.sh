@@ -18,6 +18,9 @@ echo "Installing Python dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# LOG DIRECTORY
+mkdir -p /opt/render/project/src/backend/logs 
+
 # Step 5: Apply migrations
 echo "Applying migrations..."
 python manage.py migrate
