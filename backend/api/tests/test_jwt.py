@@ -9,7 +9,11 @@ class PostMutationTest(GraphQLTestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpass")
         self.token = get_token(self.user)
-        self.author = Author.objects.create(name="John Doe", email="john.doe@example.com")
+        self.author = Author.objects.create(
+            user=self.user,  # Link the user to the author
+            name="John Doe",
+            email="john.doe@example.com",
+        )
 
     def test_create_post_authenticated(self):
         query = """

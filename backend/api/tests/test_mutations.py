@@ -8,16 +8,17 @@ from graphql_jwt.shortcuts import get_token
 
 class PostMutationTest(GraphQLTestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass")
-        self.token = get_token(self.user)
-        self.author = Author.objects.create(
-            name="John Doe",
-            email="john.doe@example.com",
-        )
-        self.post = Post.objects.create(
-            title="Post Title", content="Post content", author=self.author
-        )
-        self.comment = Comment.objects.create(content="Comment content", post=self.post)
+          self.user = User.objects.create_user(username="testuser", password="testpass")
+          self.token = get_token(self.user)
+          self.author = Author.objects.create(
+              user=self.user,  # Link the user to the author
+              name="John Doe",
+              email="john.doe@example.com",
+          )
+          self.post = Post.objects.create(
+              title="Post Title", content="Post content", author=self.author
+          )
+          self.comment = Comment.objects.create(content="Comment content", post=self.post)
 
     # Example test method with authentication
     def test_create_post(self):
