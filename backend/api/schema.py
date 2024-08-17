@@ -11,6 +11,8 @@ from graphene import relay
 
 # Import models
 from .models import Author, Post, Comment
+from django.contrib.auth.models import User
+
 
 # Import filter classes
 from .filters import AuthorFilter, PostFilter, CommentFilter
@@ -18,6 +20,13 @@ from .filters import AuthorFilter, PostFilter, CommentFilter
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+# Define GraphQL type for User mosel
+class UserType(DjangoObjectType):
+    class Meta:
+        model = User
+        fields = ("id", "username", "email")
 
 
 # Define GraphQL type for Author model
@@ -91,6 +100,28 @@ class Query(graphene.ObjectType):
 
 
 ########################     MODIFY DATA      ###############################
+# Genral User mutation
+class SignUp(graphene.Mutation):
+    class Arguments:
+        username = graphene.String(required=True)
+        password = graphene.String(required=True)
+        email = graphene.String(required=True)
+        name = graphene.String()
+        bio = graphene.String()
+
+    user = graphene.Field(UserType)
+    token = graphene.String()
+
+    def mutate(self, info, username, password, email, name=None, bio=None):
+        user = User.objects.create_user(
+            username=username, password=password, email=email
+        )
+
+        Author.objects.create(user=user, name=name, email=email, bio=bio)
+        token = graphql_jwt.shortcuts.get_token(user)
+        return SignUp(user=user, token=token)
+
+
 # Mutation to create a new author
 class CreateAuthor(graphene.Mutation):
     # Define input arguments for the mutation
@@ -232,7 +263,7 @@ class DeletePost(graphene.Mutation):
         user = info.context.user
         logger.debug(f"Deleting post with ID: {id}")
 
-         # Fetch the post by ID
+        # Fetch the post by ID
         try:
             post = Post.objects.get(pk=id)
         except Post.DoesNotExist:
@@ -240,9 +271,11 @@ class DeletePost(graphene.Mutation):
             raise Exception("Post does not exist")
 
         if post.author.user != user:
-            logger.debug(f"403- User {user.username} does not have permission to delete this post")
+            logger.debug(
+                f"403- User {user.username} does not have permission to delete this post"
+            )
             raise Exception("You do not have permission to delete this post")
-            
+
         post.delete()  # Delete the post instance
         logger.debug(f"CDeleted post with ID: {post.id}")
         return DeletePost(ok=True)
@@ -304,6 +337,8 @@ class DeleteComment(graphene.Mutation):
 #########################################################################
 class Mutation(graphene.ObjectType):
     # Link each mutation to its corresponding class
+    sign_up = SignUp.Field()
+
     create_author = CreateAuthor.Field()
     update_author = UpdateAuthor.Field()
     delete_author = DeleteAuthor.Field()

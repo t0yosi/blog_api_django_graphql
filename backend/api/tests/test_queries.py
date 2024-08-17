@@ -2,6 +2,7 @@ from django.test import TestCase
 from graphene_django.utils import GraphQLTestCase
 from ..models import Author, Post, Comment
 from ..schema import schema
+from django.contrib.auth.models import User
 
 
 class PostQueryTest(GraphQLTestCase):
