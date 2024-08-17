@@ -1,0 +1,16 @@
+services:
+  - name: api
+    type: web
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend.wsgi:application
+    envVars:
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+      - key: ALLOWED_HOSTS
+        value: blog-api-django-graphql.onrender.com
+      - key: JWT_SECRET_KEY
+        value: ${JWT_SECRET_KEY}
