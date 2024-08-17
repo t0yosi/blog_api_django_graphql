@@ -35,10 +35,10 @@ python manage.py runserver 0.0.0.0:8000
 
 # Uncomment the lines below if deploying to production with Gunicorn and Nginx
 
-# Step 8: Install and configure Gunicorn
-# echo "Installing and configuring Gunicorn..."
-# pip install gunicorn
-# gunicorn --bind 0.0.0.0:8000 your_project_name.wsgi:application
+Step 8: Install and configure Gunicorn
+echo "Installing and configuring Gunicorn..."
+pip install gunicorn
+gunicorn --bind 0.0.0.0:8000 backend.wsgi:application
 
 # Step 9: Set up Nginx to proxy pass to Gunicorn
 # echo "Configuring Nginx..."
